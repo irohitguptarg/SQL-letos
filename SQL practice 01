@@ -1,0 +1,163 @@
+-- select query and calculation, round & aliases
+SELECT
+PRODUCT_ID,
+DESCRIPTION,
+PRICE AS UNTAXED_PRICE,
+ROUND(PRICE * 1.07, 2) AS TAXED_PRICE
+FROM PRODUCT;
+
+-- text concatination operator is specified by a double pipe
+SELECT NAME,
+CITY || ', ' || STATE AS LOCATION
+FROM CUSTOMER;
+
+-- WHERE clause 
+SELECT * FROM station_data
+WHERE year = 2010; -- ( = or != or <> )
+
+-- AND, OR, IN statetment
+SELECT * FROM station_data
+WHERE MONTH = 3
+OR MONTH = 6
+OR MONTH = 9
+OR MONTH = 12;
+
+SELECT * FROM station_data
+WHERE MONTH NOT IN (3,6,9,12);
+
+SELECT * FROM station_data
+WHERE MONTH % 3 = 0;
+
+-- WHERE clause on text (where % is any number of characters and _ is any single character)
+SELECT * FROM station_data
+WHERE report_code LIKE 'B_C%';
+
+-- WHERE clause on boolean
+SELECT * FROM station_data
+WHERE tornado = 1 AND hail = 1;
+
+SELECT * FROM station_data
+WHERE snow_depth IS NULL;
+
+--handling NULL values using COALESCE function
+SELECT * FROM station_data
+WHERE precipitation IS NULL OR precipitation <= 0.5;
+
+SELECT report_code, coalesce(precipitation, 0) as rainfall
+FROM station_data;
+
+SELECT * FROM station_data
+WHERE (rain = 1 AND temperature <= 32)
+OR snow_depth > 0;
+
+-- GROUP BY & ORDER BY 
+SELECT year, MONTH, COUNT(*) AS record_count FROM station_data
+WHERE tornado = 1
+GROUP BY year, month
+ORDER BY YEAR DESC, MONTH;
+
+-- aggregate functions (SUM(), MIN(), MAX(), and AVG()
+SELECT year,
+SUM(snow_depth) as total_snow,
+SUM(precipitation) as total_precipitation,
+MAX(precipitation) as max_precipitation
+FROM station_data
+WHERE year >= 2000
+GROUP BY year;
+
+--HAVING statement
+SELECT year,
+SUM(precipitation) as total_precipitation
+FROM station_data
+GROUP BY year
+HAVING SUM(precipitation) > 30;
+
+-- CASE statement -  allows us to map one or more conditions to a corresponding value for each condition
+SELECT report_code, year, month, day, wind_speed,
+CASE
+WHEN wind_speed >= 40 THEN 'HIGH'
+WHEN wind_speed >= 30 AND wind_speed < 40 THEN 'MODERATE'
+ELSE 'LOW'
+END as wind_severity
+FROM station_data;
+
+SELECT year, month,
+SUM(precipitation) as non_tornado_precipitation
+FROM station_data
+WHERE tornado = 0
+GROUP BY year, month;
+
+SELECT year,
+MAX(CASE WHEN tornado = 0 THEN precipitation ELSE NULL END) as
+max_non_tornado_precipitation,
+MAX(CASE WHEN tornado = 1 THEN precipitation ELSE NULL END) as
+max_tornado_precipitation
+FROM station_data
+GROUP BY year;
+
+-- Joins
+SELECT ORDER_ID, 
+CUSTOMER.CUSTOMER_ID, 
+ORDER_DATE,
+SHIP_DATE,
+NAME,
+STREET_ADDRESS,
+CITY,
+STATE,
+ZIP,
+PRODUCT_ID,
+ORDER_QTY 
+FROM CUSTOMER INNER JOIN CUSTOMER_ORDER
+ON CUSTOMER.CUSTOMER_ID = CUSTOMER_ORDER.CUSTOMER_ID;
+
+SELECT
+CUSTOMER.CUSTOMER_ID,
+NAME AS CUSTOMER_NAME,
+sum(ORDER_QTY * PRICE) as TOTAL_REVENUE
+FROM CUSTOMER_ORDER
+INNER JOIN CUSTOMER
+ON CUSTOMER.CUSTOMER_ID = CUSTOMER_ORDER.CUSTOMER_ID
+INNER JOIN PRODUCT
+ON CUSTOMER_ORDER.PRODUCT_ID = PRODUCT.PRODUCT_ID
+GROUP BY 1,2;
+
+SELECT
+CUSTOMER.CUSTOMER_ID,
+NAME AS CUSTOMER_NAME,
+coalesce(sum(ORDER_QTY * PRICE), 0) as TOTAL_REVENUE
+FROM CUSTOMER
+LEFT JOIN CUSTOMER_ORDER
+ON CUSTOMER.CUSTOMER_ID = CUSTOMER_ORDER.CUSTOMER_ID
+LEFT JOIN PRODUCT
+ON CUSTOMER_ORDER.PRODUCT_ID = PRODUCT.PRODUCT_ID
+GROUP BY 1,2;
+
+
+SELECT
+COMPANY.NAME as BOOKED_COMPANY,
+ROOM.ROOM_ID as ROOM_NUMBER,
+ROOM.FLOOR_NUMBER as FLOOR,
+ROOM.SEAT_CAPACITY as SEATS,
+START_TIME,
+END_TIME
+FROM PRESENTATION
+INNER JOIN COMPANY
+ON PRESENTATION.BOOKED_COMPANY_ID = COMPANY.COMPANY_ID
+INNER JOIN ROOM
+ON PRESENTATION.BOOKED_ROOM_ID = ROOM.ROOM_ID;
+
+INSERT INTO ATTENDEE (FIRST_NAME, LAST_NAME)
+VALUES ('Thomas','Nield');
+
+INSERT INTO ATTENDEE (FIRST_NAME, LAST_NAME, PHONE, EMAIL, VIP)
+VALUES
+('Jon', 'Skeeter',4802185842,'john.skeeter@rex.net', 1),
+('Sam','Scala',2156783401,'sam.scala@gmail.com', 0),
+('Brittany','Fisher',5932857296,'brittany.fisher@outlook.com', 0);
+
+DELETE FROM ATTENDEE
+WHERE PHONE IS NULL
+AND EMAIL IS NULL;
+
+TRUNCATE TABLE ATTENDEE;
+
